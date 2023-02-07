@@ -5,32 +5,35 @@ const db = require('./config/connection');
 const routes = require('./routes');
 const { typeDefs, resolvers} = require('./schemas');
 const { authMiddleware } = require('./utils/auth');
+const mongoose = require('mongoose');
 
-const app = express();
-const PORT = process.env.PORT || 3001;
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-  context: authMiddleware
-});
+const PORT = process.env.PORT || 4000
+async function startServer() {
+  const app = express();
+  const apolloServer = new ApolloServer({
+    typeDefs,
+    resolvers
+  })
 
-server.applyMiddleware({ app });
+  await apolloServer.start()
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+  apolloServer.applyMiddleware({app: app});
 
-// if we're in production, serve client/build as static assets
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
+  app.use((req, res) => {
+    res.send('Hello from express apollo server')
+  })
+
+  await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/googlebooks', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true,
+    useFindAndModify: false,
+  });
+  console.log('Mongoose connected....')
+
+  app.listen(PORT, () => console.log('server running on port 4000'))
+
+
 }
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build/index.html'));
-})
-
-db.once('open', () => {
-  app.listen(PORT, () => {
-    console.log(`API server live on port: ${PORT}!`);
-    console.log(`GraphQL live at http://localhost:${PORT}${server.graphqlPath}`);
-  });
-});
+startServer();

@@ -27,13 +27,18 @@ const typeDefs = gql`
         title: String
     }
 
-    typre Auth {
+    type Auth {
         token: ID!
         user: User
     }
 
-    typer Query {
+    type Query {
+        getAllUsers: [User]
         user(username: String!): User
+    }
+
+    type Mutation {
+        createUser(username: String!, email: String!, password: String!): User
     }
 
 
